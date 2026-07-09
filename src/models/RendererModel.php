@@ -10,6 +10,9 @@ class RendererModel
     /** @var array<string> $lines text to display */
     public $lines;
 
+    /** @var array<array<string, string>> $segments per-line colored segments for rendering */
+    public $segments;
+
     /** @var string $font Font family */
     public $font;
 
@@ -95,11 +98,17 @@ class RendererModel
         $this->template = $template;
         $this->separator = $params["separator"] ?? $this->DEFAULTS["separator"];
         $this->random = $this->checkBoolean($params["random"] ?? $this->DEFAULTS["random"]);
-        $this->lines = $this->checkLines($params["lines"] ?? "");
         $this->font = $this->checkFont($params["font"] ?? $this->DEFAULTS["font"]);
         $this->weight = $this->checkNumberPositive($params["weight"] ?? $this->DEFAULTS["weight"], "Font weight");
         $this->color = $this->checkColor($params["color"] ?? $this->DEFAULTS["color"], "color");
         $this->background = $this->checkColor($params["background"] ?? $this->DEFAULTS["background"], "background");
+        $rawLines = $params["lines"] ?? "";
+        if (!$rawLines) {
+            throw new UnprocessableEntityException("Lines parameter must be set.");
+        }
+        $exploded = $this->explodeLines($rawLines);
+        $this->lines = array_map("htmlspecialchars", $exploded);
+        $this->segments = array_map(fn($line) => $this->parseLine($line, $this->color), $exploded);
         $this->size = $this->checkNumberPositive($params["size"] ?? $this->DEFAULTS["size"], "Font size");
         $this->center = $this->checkBoolean($params["center"] ?? $this->DEFAULTS["center"]);
         $this->vCenter = $this->checkBoolean($params["vCenter"] ?? $this->DEFAULTS["vCenter"]);
@@ -114,16 +123,13 @@ class RendererModel
     }
 
     /**
-     * Validate lines and return array of string
+     * Split the raw lines parameter into an array of raw line strings.
      *
      * @param string $lines Semicolon-separated lines parameter
-     * @return array<string> escaped array of lines
+     * @return array<string> raw line strings (shuffled if random is enabled)
      */
-    private function checkLines($lines)
+    private function explodeLines($lines)
     {
-        if (!$lines) {
-            throw new UnprocessableEntityException("Lines parameter must be set.");
-        }
         if (strlen($this->separator) === 1) {
             $lines = rtrim($lines, $this->separator);
         }
@@ -131,8 +137,41 @@ class RendererModel
         if ($this->random) {
             shuffle($exploded);
         }
-        // escape special characters to prevent code injection
-        return array_map("htmlspecialchars", $exploded);
+        return $exploded;
+    }
+
+    /**
+     * Parse a single line into an array of colored segments.
+     *
+     * Inline color tokens of the form "[[RRGGBB]]" or "[[RRGGBBAA]]" switch the
+     * color for the following text. "[[default]]" resets to the base color.
+     *
+     * @param string $line The raw line text
+     * @param string $baseColor Base color applied before any token
+     * @return array<string, string> Array of ["color" => "#...", "text" => "..."]
+     */
+    private function parseLine($line, $baseColor)
+    {
+        $segments = [];
+        $pattern = "/\[\[([0-9A-Fa-f]{3,8}|default)\]\]/";
+        // split while keeping the captured color tokens
+        $parts = preg_split($pattern, $line, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $currentColor = $baseColor;
+        foreach ($parts as $index => $part) {
+            if ($index % 2 === 1) {
+                // captured color token
+                $currentColor = strtolower($part) === "default" ? $baseColor : "#" . $part;
+            } else {
+                // text segment (skip empty ones)
+                if ($part !== "") {
+                    $segments[] = [
+                        "color" => $currentColor,
+                        "text" => htmlspecialchars($part, ENT_QUOTES),
+                    ];
+                }
+            }
+        }
+        return $segments;
     }
 
     /**

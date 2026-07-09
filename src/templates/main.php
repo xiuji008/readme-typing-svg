@@ -60,7 +60,17 @@
         x='<?= $center ? "50%" : "0%" ?>' text-anchor='<?= $center ? "middle" : "start" ?>'
         letter-spacing='<?= $letterSpacing ?>'>
         <textPath xlink:href='#path<?= $i ?>'>
-            <?= $lines[$i] . "\n" ?>
+            <?php
+            $lineSegments = $segments[$i];
+            $isPlain = count($lineSegments) === 1 && $lineSegments[0]["color"] === $color;
+            if ($isPlain) {
+                echo $lineSegments[0]["text"] . "\n";
+            } else {
+                foreach ($lineSegments as $segment) {
+                    echo "<tspan fill='" . $segment["color"] . "'>" . $segment["text"] . "</tspan>";
+                }
+            }
+            ?>
         </textPath>
     </text>
 <?php endfor; ?>

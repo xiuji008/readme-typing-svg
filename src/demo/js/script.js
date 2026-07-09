@@ -26,13 +26,13 @@ const preview = {
   },
   // dummy text for default line values
   dummyText: [
-    "The five boxing wizards jump quickly",
-    "How vexingly quick daft zebras jump",
-    "Quick fox jumps nightly above wizard",
-    "Sphinx of black quartz, judge my vow",
-    "Waltz, bad nymph, for quick jigs vex",
-    "Glib jocks quiz nymph to vex dwarf",
-    "Jived fox nymph grabs quick waltz",
+    "The [[F724A9]]five [[2ECC71]]boxing [[E74C3C]]wizards [[F1C40F]]jump [[9B59B6]]quickly",
+    "How [[36BCF7]]vexingly [[F724A9]]quick [[2ECC71]]daft [[E74C3C]]zebras jump",
+    "Quick [[9B59B6]]fox [[F1C40F]]jumps [[36BCF7]]nightly [[2ECC71]]above wizard",
+    "Sphinx [[E74C3C]]of [[F724A9]]black [[2ECC71]]quartz, [[F1C40F]]judge my vow",
+    "Waltz, [[36BCF7]]bad [[9B59B6]]nymph, [[E74C3C]]for [[F724A9]]quick jigs vex",
+    "Glib [[2ECC71]]jocks [[F1C40F]]quiz [[36BCF7]]nymph [[E74C3C]]to vex dwarf",
+    "Jived [[9B59B6]]fox [[F724A9]]nymph [[2ECC71]]grabs [[F1C40F]]quick waltz",
   ],
 
   /**
@@ -96,9 +96,8 @@ const preview = {
     // generate links and markdown
     const imageURL = `${window.location.origin}?${query}`;
     const demoImageURL = `/?${query}`;
-    const repoLink = "https://git.io/typing-svg";
-    const md = `[![Typing SVG](${imageURL})](${repoLink})`;
-    const html = `<a href="${repoLink}"><img src="${imageURL}" alt="Typing SVG" /></a>`;
+    const md = `![Typing SVG](${imageURL})`;
+    const html = `<img src="${imageURL}" alt="Typing SVG" />`;
     // don't update if nothing has changed
     const mdElement = document.querySelector(".md code");
     const htmlElement = document.querySelector(".html code");
@@ -350,3 +349,37 @@ window.addEventListener(
   },
   false
 );
+
+// 配置说明弹框
+const configModal = {
+  open() {
+    document.getElementById("config-modal-overlay").classList.add("open");
+  },
+  close() {
+    document.getElementById("config-modal-overlay").classList.remove("open");
+  },
+};
+
+document.getElementById("config-help-btn").addEventListener("click", () => configModal.open());
+document.getElementById("config-modal-close").addEventListener("click", () => configModal.close());
+document.getElementById("config-modal-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "config-modal-overlay") {
+    configModal.close();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    configModal.close();
+  }
+});
+
+// 常用颜色预设
+document.querySelectorAll(".color-presets .swatch").forEach((sw) => {
+  sw.addEventListener("click", () => {
+    const input = document.getElementById(sw.parentElement.dataset.target);
+    if (input && input.jscolor) {
+      input.jscolor.fromString(sw.dataset.color);
+      preview.update();
+    }
+  });
+});
