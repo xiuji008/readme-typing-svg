@@ -36,4 +36,9 @@ RUN sed -ri -e 's!Listen 80!Listen ${PORT}!g' /etc/apache2/ports.conf \
 
 EXPOSE 80
 
+# 字体目录（fonts.json 配置 + 上传/内置字体文件）单独挂载为数据卷，
+# 容器重建后字体与配置可持久化。例如：
+#   docker run -v /host/path/fonts:/var/www/html/src/fonts readme-typing-svg
+VOLUME ["/var/www/html/src/fonts"]
+
 CMD ["apache2-foreground"]

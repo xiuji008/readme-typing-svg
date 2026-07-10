@@ -1,6 +1,6 @@
 # 修改记录
 
-本项目基于 [readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg) 的本地定制版本，以下为相对上游所做的改动记录。
+本项目基于 [readme-typing-svg](https://github.com/xiuji008/readme-typing-svg) 的本地定制版本，以下为相对上游所做的改动记录。
 
 ## 2026-07-10
 

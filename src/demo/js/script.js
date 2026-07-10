@@ -96,8 +96,8 @@ const preview = {
     // generate links and markdown
     const imageURL = `${window.location.origin}?${query}`;
     const demoImageURL = `/?${query}`;
-    const md = `![Typing SVG](${imageURL})`;
-    const html = `<img src="${imageURL}" alt="Typing SVG" />`;
+    const md = `![](${imageURL})`;
+    const html = `<img src="${imageURL}" />`;
     // don't update if nothing has changed
     const mdElement = document.querySelector(".md code");
     const htmlElement = document.querySelector(".html code");
@@ -108,6 +108,11 @@ const preview = {
     // update image preview
     image.src = demoImageURL;
     image.classList.add("loading");
+    // 让「下载 SVG」按钮指向当前预览地址，点击即可下载已内嵌字体的 SVG
+    const downloadLink = document.getElementById("download-svg");
+    if (downloadLink) {
+      downloadLink.href = demoImageURL;
+    }
     // update markdown and html
     mdElement.innerText = md;
     htmlElement.innerText = html;

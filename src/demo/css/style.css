@@ -251,6 +251,12 @@ input:focus:invalid {
 label.show-border {
   display: block;
   margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.output #download-svg {
+  display: inline-block;
+  margin-top: 4px;
 }
 
 .label-group {
@@ -463,4 +469,210 @@ a.underline-hover {
     right: auto;
     width: 100%;
   }
+}
+
+/* 字体速查表 */
+.font-cheatsheet-card .hint {
+  color: var(--stroke);
+  font-size: 0.85em;
+  margin: 4px 0 12px;
+}
+
+.font-cheatsheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.font-chip {
+  font-size: 18px;
+  line-height: 1.4;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-background);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+}
+
+.font-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.font-chip.copied {
+  background: var(--blue-light);
+  color: #fff;
+  border-color: var(--blue-light);
+}
+
+/* 速查表：搜索框 + 分类 */
+.cheatsheet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 12px;
+  align-items: center;
+}
+.font-search {
+  flex: 1 1 200px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 0.95em;
+}
+.font-search:focus {
+  outline: none;
+  border-color: var(--blue-light);
+}
+.font-cats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.font-cat {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-background);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.font-cat:hover {
+  border-color: var(--blue-light);
+}
+.font-cat.active {
+  background: var(--blue-light);
+  color: #fff;
+  border-color: var(--blue-light);
+}
+
+/* 上传字体 */
+.font-upload-card .hint {
+  color: var(--stroke);
+  font-size: 0.85em;
+  margin: 4px 0 12px;
+}
+.font-upload-card code {
+  background: var(--background);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.font-upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.font-upload-form input[type="file"] {
+  flex: 1 1 240px;
+  color: var(--text);
+}
+.font-upload-msg {
+  margin: 10px 0 0;
+  font-size: 0.9em;
+}
+.font-upload-msg.success {
+  color: #2ecc71;
+}
+.font-upload-msg.error {
+  color: var(--red);
+}
+.local-font-list {
+  margin-top: 12px;
+}
+.local-font-list h3 {
+  font-size: 0.95em;
+  margin: 0 0 6px;
+}
+.local-font-list ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.local-font-list .muted {
+  color: var(--stroke);
+  font-size: 0.85em;
+}
+
+/* 可视化文字编辑器 */
+.line-editor {
+  grid-column: 1 / -1;
+  margin: 4px 0 10px;
+  padding: 10px 12px;
+  min-height: 1.6em;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: text;
+  font-size: 1.05em;
+  line-height: 1.6;
+}
+
+.line-editor:hover {
+  border-color: var(--blue-light);
+}
+
+.line-editor span {
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* 浮动格式工具栏 */
+.fmt-toolbar {
+  position: fixed;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--card-background);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+}
+
+.fmt-toolbar .fmt-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fmt-toolbar input[type="color"] {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.fmt-toolbar input[type="number"],
+.fmt-toolbar select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card-background);
+  color: var(--text);
+}
+
+.fmt-toolbar .btn {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.fmt-toolbar .fmt-close {
+  background: transparent;
+  color: var(--text);
+  box-shadow: none;
 }

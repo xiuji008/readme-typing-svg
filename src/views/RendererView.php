@@ -28,7 +28,9 @@ class RendererView
         // import variables into symbol table
         extract([
             "lines" => $this->model->lines,
+            "segments" => $this->model->segments,
             "font" => $this->model->font,
+            "weight" => $this->model->weight,
             "color" => $this->model->color,
             "background" => $this->model->background,
             "size" => $this->model->size,

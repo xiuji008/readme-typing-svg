@@ -1,4 +1,4 @@
-<!-- https://github.com/DenverCoder1/readme-typing-svg/ -->
+<!-- https://github.com/xiuji008/readme-typing-svg/ -->
 <svg xmlns='http://www.w3.org/2000/svg'
     xmlns:xlink='http://www.w3.org/1999/xlink'
     viewBox='0 0 <?= "$width $height" ?>'
@@ -55,19 +55,37 @@
                     values='<?= implode(" ; ", $values) ?>' keyTimes='<?= implode(";", $keyTimes) ?>' />
             <?php endif; ?>
         </path>
-    <text font-family='"<?= $font ?>", monospace' fill='<?= $color ?>' font-size='<?= $size ?>'
+    <text font-family='"<?= $font ?>", monospace' fill='<?= $color ?>' font-size='<?= $size ?>' font-weight='<?= $weight ?>'
         dominant-baseline='<?= $vCenter ? "middle" : "auto" ?>'
         x='<?= $center ? "50%" : "0%" ?>' text-anchor='<?= $center ? "middle" : "start" ?>'
         letter-spacing='<?= $letterSpacing ?>'>
         <textPath xlink:href='#path<?= $i ?>'>
             <?php
             $lineSegments = $segments[$i];
-            $isPlain = count($lineSegments) === 1 && $lineSegments[0]["color"] === $color;
+            // a line is "plain" when its only segment matches every line default
+            $isPlain = count($lineSegments) === 1
+                && $lineSegments[0]["color"] === $color
+                && $lineSegments[0]["font"] === null
+                && $lineSegments[0]["size"] === null
+                && $lineSegments[0]["weight"] === null;
             if ($isPlain) {
                 echo $lineSegments[0]["text"] . "\n";
             } else {
                 foreach ($lineSegments as $segment) {
-                    echo "<tspan fill='" . $segment["color"] . "'>" . $segment["text"] . "</tspan>";
+                    $attrs = "";
+                    if ($segment["color"] !== $color) {
+                        $attrs .= " fill='" . $segment["color"] . "'";
+                    }
+                    if ($segment["font"] !== null) {
+                        $attrs .= " font-family='" . htmlspecialchars($segment["font"], ENT_QUOTES) . ", monospace'";
+                    }
+                    if ($segment["size"] !== null) {
+                        $attrs .= " font-size='" . (int) $segment["size"] . "'";
+                    }
+                    if ($segment["weight"] !== null) {
+                        $attrs .= " font-weight='" . (int) $segment["weight"] . "'";
+                    }
+                    echo "<tspan" . $attrs . ">" . $segment["text"] . "</tspan>";
                 }
             }
             ?>

@@ -1,0 +1,31 @@
+# Readme Typing SVG - Docker Compose
+#
+# 用法：
+#   docker compose up -d --build     构建并后台启动
+#   docker compose logs -f           查看日志
+#   docker compose down              停止并移除容器
+#
+# 访问地址：http://localhost:8000/        （首页）
+#           http://localhost:8000/demo/   （可视化编辑器）
+#
+# 字体持久化：
+#   通过绑定挂载 ./src/fonts 到容器内 /var/www/html/src/fonts，
+#   字体配置 fonts.json 与上传/内置的字体文件会直接复用项目目录，
+#   容器重建后字体与配置不会丢失。
+
+services:
+  readme-typing-svg:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: readme-typing-svg:latest
+    container_name: readme-typing-svg
+    ports:
+      - "8000:80"
+    environment:
+      # 对应 Dockerfile 中的 $PORT，Apache 监听的容器内端口
+      PORT: "80"
+    volumes:
+      # 字体目录持久化（fonts.json + 上传/内置 ttf）
+      - ./src/fonts:/var/www/html/src/fonts
+    restart: unless-stopped

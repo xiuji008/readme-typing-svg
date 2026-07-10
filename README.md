@@ -35,6 +35,21 @@ Here you can easily customize your Typing SVG with a live preview.
 
 [![Demo Site](https://user-images.githubusercontent.com/20955511/183703055-42ec8754-d84c-414f-8132-a02974224aa1.gif "Demo Site")](https://readme-typing-svg.demolab.com/demo/)
 
+## 🛠 改造说明
+
+本仓库在官方 [readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg) 基础上做了以下本地化改造：
+
+- **中文 / CJK 字体支持**：内置字体列表新增 41 个中文及中日韩字体（如 Noto Sans/Serif SC、Ma Shan Zheng、ZCOOL 系列、LXGW WenKai TC、Noto TC/HK、Klee One、Zen 系列、Noto Sans JP 等），总字体数达 85 个。
+- **字体源可配置（国内镜像）**：默认使用国内镜像 `https://fonts.googleapis.cn` 抓取 Google 字体，支持通过 `font_source` 参数覆盖，源不可达时自动回退官方 `fonts.googleapis.com`。
+- **字体统一目录**：字体配置文件 `fonts.json` 与上传的字体文件统一存放在 `src/fonts/`，便于 Docker 部署时挂载持久化，避免重建镜像后丢失。
+- **字体速查表**：Demo 页新增「字体速查表」，点击任意字体即可复制其名称并填入“字体”框。
+- **可视化文字编辑器**：可点击单词或拖选词语，弹出工具栏设置颜色、加粗、字号、字体，底层写入与后端一致的 `[[...]]` 语法。
+- **上传字体**：支持上传 `.ttf` / `.zip` 字体文件，自动登记到 `fonts.json` 的本地字体列表，支持中文名称。
+- **下载 SVG**：预览区新增「下载 SVG」按钮，导出的 SVG 已内嵌 `@font-face` base64 字体，自包含、可直接用于 GitHub README，无需依赖外部字体服务。
+- **复制代码去描述**：复制到剪贴板的 Markdown / HTML 示例代码已去掉图片描述（分别为 `![]()` 与无 `alt` 的 `<img>`）。
+
+> 说明：SVG 预览与导出均通过 `curl` 抓取字体并内联，确保渲染自包含；若服务器无法访问外部字体源，将自动回退并使用系统/默认字体。
+
 ## 🚀 Example usage
 
 Below are links to profiles where you can see Readme Typing SVGs in action!
@@ -140,7 +155,7 @@ Below are links to profiles where you can see Readme Typing SVGs in action!
 [![Lixiao Zhu](https://github.com/zhulixiao.png?size=60)](https://github.com/zhulixiao "Lixiao Zhu on Github")
 [![Ahmed Nassar](https://github.com/AhmedNassar7.png?size=60)](https://github.com/AhmedNassar7 "Ahmed Nassar on Github")
 
-Feel free to [open a PR](https://github.com/DenverCoder1/readme-typing-svg/issues/21#issue-870549556) and add yours!
+Feel free to [open a PR](https://github.com/xiuji008/readme-typing-svg/issues/21#issue-870549556) and add yours!
 
 ## 🔧 Options
 
@@ -175,7 +190,7 @@ You can deploy the PHP files on any website server with PHP installed or as a He
 1. Sign in to **Heroku** or create a new account at <https://heroku.com>
 2. Click the "Deploy to Heroku" button below
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg "Deploy to Heroku")](https://heroku.com/deploy?template=https://github.com/DenverCoder1/readme-typing-svg/tree/main)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg "Deploy to Heroku")](https://heroku.com/deploy?template=https://github.com/xiuji008/readme-typing-svg/tree/main)
 
 3. On the page that comes up, click **"Deploy App"** at the end of the form
 4. Once the app is deployed, click **"Manage App"** to go to the dashboard

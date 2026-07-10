@@ -61,6 +61,15 @@ class RendererModel
     /** @var string $fontCSS CSS required for displaying the selected font */
     public $fontCSS;
 
+    /** Directory where user-uploaded font files are stored (fixed path) */
+    private const LOCAL_FONT_DIR = __DIR__ . "/../fonts/";
+
+    /** @var array<string, string> $localFonts name => filename (within LOCAL_FONT_DIR) */
+    private $localFonts = [];
+
+    /** @var string $fontSourceBase Base URL of the Google Fonts CSS API (font source) */
+    private $fontSourceBase = GoogleFontConverter::DEFAULT_CSS_BASE;
+
     /** @var string $letterSpacing Letter spacing */
     public $letterSpacing;
 
@@ -118,7 +127,42 @@ class RendererModel
         $this->duration = $this->checkNumberPositive($params["duration"] ?? $this->DEFAULTS["duration"], "duration");
         $this->pause = $this->checkNumberNonNegative($params["pause"] ?? $this->DEFAULTS["pause"], "pause");
         $this->repeat = $this->checkBoolean($params["repeat"] ?? $this->DEFAULTS["repeat"]);
-        $this->fontCSS = $this->fetchFontCSS($this->font, $this->weight, $params["lines"]);
+        // 加载字体配置（本地上传字体映射： 名称 => 文件名 + css_base）
+        $this->loadLocalFonts();
+        // 允许通过 URL 参数 font_source 覆盖字体源（缺省用配置文件 / 转换器默认）
+        $fontSourceParam = $params["font_source"] ?? "";
+        if (is_string($fontSourceParam) && $fontSourceParam !== "") {
+            $this->fontSourceBase = rtrim($fontSourceParam, "/");
+        }
+        // 收集所有用到的（字体, 字重）组合：含整行默认字体，以及每个分段字体。
+        // 本地字体从固定路径读取并内嵌；Google 字体实时抓取并内嵌。
+        $fontSpecs = [];
+        $lineFont = $this->font;
+        $lineWeight = $this->weight;
+        if ($lineFont !== $this->DEFAULTS["font"]) {
+            $fontSpecs["{$lineFont}|{$lineWeight}"] = [$lineFont, $lineWeight];
+        }
+        foreach ($this->segments as $lineSegments) {
+            foreach ($lineSegments as $segment) {
+                if (!empty($segment["font"])) {
+                    $w = $segment["weight"] ?? $lineWeight;
+                    $fontSpecs["{$segment["font"]}|{$w}"] = [$segment["font"], $w];
+                }
+            }
+        }
+        $fontCSS = "";
+        foreach ($fontSpecs as [$f, $w]) {
+            if (isset($this->localFonts[$f])) {
+                $fontCSS .= GoogleFontConverter::embedLocalFont(
+                    $f,
+                    self::LOCAL_FONT_DIR . $this->localFonts[$f],
+                    (int) $w
+                );
+            } else {
+                $fontCSS .= $this->fetchFontCSS($f, $w, $params["lines"]);
+            }
+        }
+        $this->fontCSS = $fontCSS;
         $this->letterSpacing = $this->checkLetterSpacing($params["letterSpacing"] ?? $this->DEFAULTS["letterSpacing"]);
     }
 
@@ -153,22 +197,91 @@ class RendererModel
     private function parseLine($line, $baseColor)
     {
         $segments = [];
-        $pattern = "/\[\[([0-9A-Fa-f]{3,8}|default)\]\]/";
-        // split while keeping the captured color tokens
+        // split while keeping the captured "[[...]]" tokens
+        $pattern = "/(\[\[[^\]]+\]\])/";
         $parts = preg_split($pattern, $line, -1, PREG_SPLIT_DELIM_CAPTURE);
-        $currentColor = $baseColor;
+
+        // current effective attributes (null = inherit line default)
+        $state = [
+            "color" => $baseColor,
+            "font" => null,
+            "size" => null,
+            "weight" => null,
+        ];
+
+        // append a text portion using the current state, merging with the
+        // previous segment when all attributes match to keep output minimal
+        $push = function ($text) use (&$segments, &$state) {
+            $text = htmlspecialchars($text, ENT_QUOTES);
+            if ($text === "") {
+                return;
+            }
+            $last = count($segments) - 1;
+            if (
+                $last >= 0
+                && $segments[$last]["color"] === $state["color"]
+                && $segments[$last]["font"] === $state["font"]
+                && $segments[$last]["size"] === $state["size"]
+                && $segments[$last]["weight"] === $state["weight"]
+            ) {
+                $segments[$last]["text"] .= $text;
+                return;
+            }
+            $segments[] = [
+                "color" => $state["color"],
+                "font" => $state["font"],
+                "size" => $state["size"],
+                "weight" => $state["weight"],
+                "text" => $text,
+            ];
+        };
+
+        // apply a single "[[...]]" token to the current state
+        $applyToken = function ($token) use (&$state, $baseColor) {
+            $inner = substr($token, 2, -2);
+            $lower = strtolower($inner);
+            if ($lower === "default") {
+                // reset color to the line default color
+                $state["color"] = $baseColor;
+                return;
+            }
+            if ($lower === "reset") {
+                // reset every attribute back to the line defaults
+                $state = ["color" => $baseColor, "font" => null, "size" => null, "weight" => null];
+                return;
+            }
+            if ($lower === "bold") {
+                $state["weight"] = 700;
+                return;
+            }
+            if ($lower === "normal") {
+                $state["weight"] = null;
+                return;
+            }
+            if (preg_match("/^font=(.*)$/i", $inner, $m)) {
+                $state["font"] = strtolower($m[1]) === "default" ? null : $m[1];
+                return;
+            }
+            if (preg_match("/^size=(\d+)$/i", $inner, $m)) {
+                $state["size"] = strtolower($m[1]) === "default" ? null : (int) $m[1];
+                return;
+            }
+            if (preg_match("/^weight=(\d{1,3})$/i", $inner, $m)) {
+                $state["weight"] = strtolower($m[1]) === "default" ? null : (int) $m[1];
+                return;
+            }
+            if (preg_match("/^[0-9A-Fa-f]{3,8}$/", $inner)) {
+                $state["color"] = "#" . strtolower($inner);
+                return;
+            }
+            // unknown token: ignore so it is rendered as literal text
+        };
+
         foreach ($parts as $index => $part) {
             if ($index % 2 === 1) {
-                // captured color token
-                $currentColor = strtolower($part) === "default" ? $baseColor : "#" . $part;
+                $applyToken($part);
             } else {
-                // text segment (skip empty ones)
-                if ($part !== "") {
-                    $segments[] = [
-                        "color" => $currentColor,
-                        "text" => htmlspecialchars($part, ENT_QUOTES),
-                    ];
-                }
+                $push($part);
             }
         }
         return $segments;
@@ -182,8 +295,30 @@ class RendererModel
      */
     private function checkFont($font)
     {
-        // return sanitized font name
-        return preg_replace("/[^0-9A-Za-z\- ]/", "", $font);
+        // 允许字母（含中文等 Unicode）、数字、连字符与空格；
+        // 去除可能破坏 SVG 属性的引号等字符
+        return preg_replace("/[^\p{L}\p{N}\- ]/u", "", $font);
+    }
+
+    /**
+     * Load the local (uploaded) font map from the font config file.
+     */
+    private function loadLocalFonts(): void
+    {
+        $configPath = __DIR__ . "/../fonts/fonts.json";
+        if (!is_file($configPath)) {
+            $this->localFonts = [];
+            return;
+        }
+        $raw = ltrim((string) file_get_contents($configPath), "\xEF\xBB\xBF");
+        $config = json_decode($raw, true);
+        $this->localFonts = (isset($config["local"]) && is_array($config["local"]))
+            ? $config["local"]
+            : [];
+        // 字体源（CSS 接口地址）。缺省时使用转换器的 DEFAULT_CSS_BASE
+        $this->fontSourceBase = (isset($config["css_base"]) && is_string($config["css_base"]) && $config["css_base"] !== "")
+            ? rtrim($config["css_base"], "/")
+            : GoogleFontConverter::DEFAULT_CSS_BASE;
     }
 
     /**
@@ -258,8 +393,8 @@ class RendererModel
     {
         // skip checking if left as default
         if ($font != $this->DEFAULTS["font"]) {
-            // fetch and convert from Google Fonts
-            $from_google_fonts = GoogleFontConverter::fetchFontCSS($font, $weight, $text);
+            // fetch and convert from Google Fonts (字体源可配置)
+            $from_google_fonts = GoogleFontConverter::fetchFontCSS($font, $weight, $text, $this->fontSourceBase);
             if ($from_google_fonts) {
                 // return the CSS for displaying the font
                 return "<style>\n{$from_google_fonts}</style>\n";
